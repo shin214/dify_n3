@@ -1,25 +1,31 @@
-import { getLocaleOnServer } from '@/i18n/server'
+import type React from "react"
+import "./globals.css"
+import { Inter } from "next/font/google"
+import { ClerkProvider } from "@clerk/nextjs"
+import { ThemeProvider } from "@/components/theme-provider"
 
-import './styles/globals.css'
-import './styles/markdown.scss'
+const inter = Inter({ subsets: ["latin"] })
 
-const LocaleLayout = ({
+export const metadata = {
+  title: "Dify Chat App",
+  description: "Dify Chat Application with Clerk Authentication",
+    generator: 'v0.dev'
+}
+
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
-}) => {
-  const locale = getLocaleOnServer()
+}) {
   return (
-    <html lang={locale ?? 'en'} className="h-full">
-      <body className="h-full">
-        <div className="overflow-x-auto">
-          <div className="w-screen h-screen min-w-[300px]">
+    <ClerkProvider>
+      <html lang="ja">
+        <body className={inter.className}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             {children}
-          </div>
-        </div>
-      </body>
-    </html>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
-
-export default LocaleLayout

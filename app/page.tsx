@@ -1,15 +1,28 @@
-import type { FC } from 'react'
-import React from 'react'
+import { redirect } from "next/navigation"
+import { auth } from "@clerk/nextjs/server"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
-import type { IMainProps } from '@/app/components'
-import Main from '@/app/components'
+export default function Home() {
+  const { userId } = auth()
 
-const App: FC<IMainProps> = ({
-  params,
-}: any) => {
+  // 認証済みの場合はチャットページにリダイレクト
+  if (userId) {
+    redirect("/chat")
+  }
+
   return (
-    <Main params={params} />
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+      <h1 className="text-4xl font-bold mb-6">Difyチャットアプリへようこそ</h1>
+      <p className="text-xl mb-8 max-w-md">AIを活用したチャットアプリケーションで、新しい会話体験を始めましょう。</p>
+      <div className="flex gap-4">
+        <Button asChild>
+          <Link href="/sign-in">サインイン</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/sign-up">アカウント作成</Link>
+        </Button>
+      </div>
+    </div>
   )
 }
-
-export default React.memo(App)
