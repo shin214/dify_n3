@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUser } from "@clerk/nextjs"
+import { sendMessageToDifyAction, createConversationAction } from "@/app/actions/dify-actions"
 
 type Message = {
   id: string
@@ -19,13 +20,15 @@ type Message = {
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: "1",
+      id: "welcome",
       content: "こんにちは！どのようにお手伝いできますか？",
       sender: "ai",
       timestamp: new Date(),
     },
   ])
   const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { user } = useUser()
 
@@ -34,9 +37,24 @@ export default function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // 初回レンダリング時に会話IDを作成
+  useEffect(() => {
+    async function initConversation() {
+      try {
+        const newConversationId = await createConversationAction()
+        setConversationId(newConversationId)
+        console.log("New conversation created:", newConversationId)
+      } catch (error) {
+        console.error("Failed to create conversation:", error)
+      }
+    }
+
+    initConversation()
+  }, [])
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim()) return
+    if (!input.trim() || isLoading) return
 
     // ユーザーメッセージを追加
     const userMessage: Message = {
@@ -47,18 +65,40 @@ export default function ChatInterface() {
     }
     setMessages((prev) => [...prev, userMessage])
     setInput("")
+    setIsLoading(true)
 
-    // ここでDify APIを呼び出す処理を実装
-    // 実際のAPIコールの代わりに、簡単な応答を追加
-    setTimeout(() => {
+    try {
+      // サーバーアクションを使用してDify APIにメッセージを送信
+      const response = await sendMessageToDifyAction(input, conversationId || undefined)
+
+      // AIの応答を追加
       const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `「${input}」についてのご質問ありがとうございます。お手伝いします。`,
+        id: Date.now().toString(),
+        content: response.answer || "応答がありませんでした。",
         sender: "ai",
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, aiMessage])
-    }, 1000)
+
+      // 会話IDが未設定の場合は設定
+      if (!conversationId && response.conversation_id) {
+        setConversationId(response.conversation_id)
+      }
+    } catch (error) {
+      console.error("Error sending message:", error)
+      // エラーメッセージを表示
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          content: "メッセージの送信中にエラーが発生しました。もう一度お試しください。",
+          sender: "ai",
+          timestamp: new Date(),
+        },
+      ])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -76,7 +116,7 @@ export default function ChatInterface() {
                 </Avatar>
               ) : (
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src={user?.imageUrl || "/placeholder.svg"} />
+                  <AvatarImage src={user?.imageUrl || "/placeholder.svg?height=32&width=32"} />
                   <AvatarFallback>{user?.firstName?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
               )}
@@ -85,7 +125,7 @@ export default function ChatInterface() {
                   message.sender === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                 }`}
               >
-                <p className="text-sm">{message.content}</p>
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 <p className="text-xs text-gray-400 mt-1">{message.timestamp.toLocaleTimeString()}</p>
               </div>
             </div>
@@ -100,8 +140,9 @@ export default function ChatInterface() {
           onChange={(e) => setInput(e.target.value)}
           placeholder="メッセージを入力..."
           className="flex-1"
+          disabled={isLoading}
         />
-        <Button type="submit" size="icon">
+        <Button type="submit" size="icon" disabled={isLoading}>
           <Send className="h-4 w-4" />
         </Button>
       </form>
