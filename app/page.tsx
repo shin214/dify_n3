@@ -1,27 +1,20 @@
-import { redirect } from "next/navigation"
-import { currentUser } from "@clerk/nextjs/server"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { UserButton } from "@clerk/nextjs"
 
-export default async function Home() {
-  const user = await currentUser()
-
-  // 認証済みの場合はチャットページにリダイレクト
-  if (user) {
-    redirect("/chat")
-  }
-
+export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <h1 className="text-4xl font-bold mb-6">Difyチャットアプリへようこそ</h1>
-      <p className="text-xl mb-8 max-w-md">AIを活用したチャットアプリケーションで、新しい会話体験を始めましょう。</p>
-      <div className="flex gap-4">
-        <Button asChild>
-          <Link href="/sign-in">サインイン</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/sign-up">アカウント作成</Link>
-        </Button>
+      <div className="flex flex-col items-center gap-4">
+        <Link href="/sign-in" className="text-blue-500 hover:underline">
+          サインイン
+        </Link>
+        <Link href="/sign-up" className="text-blue-500 hover:underline">
+          アカウント作成
+        </Link>
+        <div className="mt-4">
+          <UserButton afterSignOutUrl="/" />
+        </div>
       </div>
     </div>
   )

@@ -1,25 +1,21 @@
 import { UserButton } from "@clerk/nextjs"
-import { redirect } from "next/navigation"
-import { currentUser } from "@clerk/nextjs/server"
-import ChatInterface from "@/components/chat-interface"
+import Link from "next/link"
 
-export default async function ChatPage() {
-  const user = await currentUser()
-
-  // 未認証の場合はサインインページにリダイレクト
-  if (!user) {
-    redirect("/sign-in")
-  }
-
+export default function ChatPage() {
   return (
-    <div className="flex flex-col h-screen">
-      <header className="flex items-center justify-between p-4 border-b">
-        <h1 className="text-xl font-bold">Difyチャット</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <header className="w-full max-w-3xl flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-bold">Difyチャット</h1>
         <UserButton afterSignOutUrl="/" />
       </header>
-      <main className="flex-1 overflow-hidden">
-        <ChatInterface />
-      </main>
+      <div className="w-full max-w-3xl p-4 border rounded-lg">
+        <p className="text-center mb-4">チャットが正常に表示されています</p>
+        <div className="flex justify-center">
+          <Link href="/" className="text-blue-500 hover:underline">
+            ホームに戻る
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }
