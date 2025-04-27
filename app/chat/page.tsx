@@ -1,13 +1,13 @@
 import { UserButton } from "@clerk/nextjs"
 import { redirect } from "next/navigation"
-import { auth } from "@clerk/nextjs/server"
+import { currentUser } from "@clerk/nextjs/server"
 import ChatInterface from "@/components/chat-interface"
 
-export default function ChatPage() {
-  const { userId } = auth()
+export default async function ChatPage() {
+  const user = await currentUser()
 
   // 未認証の場合はサインインページにリダイレクト
-  if (!userId) {
+  if (!user) {
     redirect("/sign-in")
   }
 

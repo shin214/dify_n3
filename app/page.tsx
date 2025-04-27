@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation"
-import { auth } from "@clerk/nextjs/server"
+import { currentUser } from "@clerk/nextjs/server"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-export default function Home() {
-  const { userId } = auth()
+export default async function Home() {
+  const user = await currentUser()
 
   // 認証済みの場合はチャットページにリダイレクト
-  if (userId) {
+  if (user) {
     redirect("/chat")
   }
 

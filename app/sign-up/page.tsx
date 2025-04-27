@@ -1,12 +1,12 @@
 import { SignUp } from "@clerk/nextjs"
 import { redirect } from "next/navigation"
-import { auth } from "@clerk/nextjs/server"
+import { currentUser } from "@clerk/nextjs/server"
 
-export default function SignUpPage() {
-  const { userId } = auth()
+export default async function SignUpPage() {
+  const user = await currentUser()
 
   // すでに認証済みの場合はチャットページにリダイレクト
-  if (userId) {
+  if (user) {
     redirect("/chat")
   }
 
