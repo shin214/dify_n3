@@ -1,11 +1,8 @@
 import { authMiddleware } from "@clerk/nextjs"
 
+// すべてのルートを公開ルートとして設定（デバッグ用）
 export default authMiddleware({
-  // 認証なしでアクセス可能なパブリックルート
-  publicRoutes: ["/", "/api(.*)"],
-
-  // 認証が必要なルート
-  ignoredRoutes: ["/_next", "/favicon.ico"],
+  publicRoutes: ["/(.*)", "/api(.*)"],
 })
 
 export const config = {
