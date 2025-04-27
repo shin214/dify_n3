@@ -17,7 +17,11 @@ type Message = {
   timestamp: Date
 }
 
-export default function ChatInterface() {
+interface ChatInterfaceProps {
+  userId: string
+}
+
+export default function ChatInterface({ userId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -29,6 +33,7 @@ export default function ChatInterface() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { user } = useUser()
 
@@ -41,11 +46,13 @@ export default function ChatInterface() {
   useEffect(() => {
     async function initConversation() {
       try {
+        setError(null)
         const newConversationId = await createConversationAction()
         setConversationId(newConversationId)
         console.log("New conversation created:", newConversationId)
       } catch (error) {
         console.error("Failed to create conversation:", error)
+        setError("会話の初期化に失敗しました。ページを再読み込みしてください。")
       }
     }
 
@@ -66,6 +73,7 @@ export default function ChatInterface() {
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
+    setError(null)
 
     try {
       // サーバーアクションを使用してDify APIにメッセージを送信
@@ -87,6 +95,7 @@ export default function ChatInterface() {
     } catch (error) {
       console.error("Error sending message:", error)
       // エラーメッセージを表示
+      setError("メッセージの送信中にエラーが発生しました。もう一度お試しください。")
       setMessages((prev) => [
         ...prev,
         {
@@ -103,6 +112,12 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full">
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded m-4" role="alert">
+          <p>{error}</p>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>

@@ -22,6 +22,8 @@ export async function sendMessageToDifyAction(message: string, conversationId?: 
       ? `${apiUrl}/chat-messages?conversation_id=${conversationId}`
       : `${apiUrl}/chat-messages`
 
+    console.log("Sending message to Dify API:", endpoint)
+
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -38,7 +40,8 @@ export async function sendMessageToDifyAction(message: string, conversationId?: 
     })
 
     if (!response.ok) {
-      const errorData = await response.json()
+      const errorData = await response.json().catch(() => ({}))
+      console.error("Dify API error response:", errorData)
       throw new Error(`Dify API error: ${errorData.message || response.statusText}`)
     }
 
@@ -65,6 +68,8 @@ export async function createConversationAction() {
       throw new Error("Dify API credentials are not configured")
     }
 
+    console.log("Creating conversation with Dify API")
+
     const response = await fetch(`${apiUrl}/conversations`, {
       method: "POST",
       headers: {
@@ -78,7 +83,8 @@ export async function createConversationAction() {
     })
 
     if (!response.ok) {
-      const errorData = await response.json()
+      const errorData = await response.json().catch(() => ({}))
+      console.error("Dify API error response:", errorData)
       throw new Error(`Dify API error: ${errorData.message || response.statusText}`)
     }
 
