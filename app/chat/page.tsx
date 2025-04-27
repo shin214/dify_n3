@@ -1,14 +1,22 @@
-import { UserButton } from "@clerk/nextjs"
-import { redirect } from "next/navigation"
-import { currentUser } from "@clerk/nextjs/server"
+"use client"
+
+import { UserButton, useAuth } from "@clerk/nextjs"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import ChatInterface from "@/components/chat-interface"
 
-export default async function ChatPage() {
-  const user = await currentUser()
+export default function ChatPage() {
+  const { isLoaded, userId } = useAuth()
+  const router = useRouter()
 
-  // 未認証の場合はサインインページにリダイレクト
-  if (!user) {
-    redirect("/sign-in")
+  useEffect(() => {
+    if (isLoaded && !userId) {
+      router.push("/")
+    }
+  }, [isLoaded, userId, router])
+
+  if (!isLoaded || !userId) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
   }
 
   return (

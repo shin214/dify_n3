@@ -12,7 +12,7 @@ export async function sendMessageToDifyAction(message: string, conversationId?: 
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.dify.ai/v1"
     const appId = process.env.NEXT_PUBLIC_APP_ID
-    const apiKey = process.env.APP_KEY // NEXT_PUBLIC_プレフィックスなしに変更
+    const apiKey = process.env.APP_KEY
 
     if (!appId || !apiKey) {
       throw new Error("Dify API credentials are not configured")
@@ -32,7 +32,7 @@ export async function sendMessageToDifyAction(message: string, conversationId?: 
       body: JSON.stringify({
         inputs: {},
         query: message,
-        response_mode: "blocking", // ストリーミングではなくブロッキングモードに変更
+        response_mode: "blocking",
         user: userId,
       }),
     })
@@ -59,7 +59,7 @@ export async function createConversationAction() {
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.dify.ai/v1"
     const appId = process.env.NEXT_PUBLIC_APP_ID
-    const apiKey = process.env.APP_KEY // NEXT_PUBLIC_プレフィックスなしに変更
+    const apiKey = process.env.APP_KEY
 
     if (!appId || !apiKey) {
       throw new Error("Dify API credentials are not configured")
