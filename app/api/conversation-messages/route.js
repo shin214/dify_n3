@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-export async function GET(request: Request) {
+export async function GET(request) {
   try {
     const url = new URL(request.url)
     const conversationId = url.searchParams.get("conversation_id")
@@ -41,13 +41,12 @@ export async function GET(request: Request) {
     const data = await response.json()
     console.log("Messages fetched successfully:", data)
     return NextResponse.json(data)
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in conversation messages API route:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-// POSTメソッドを追加（必要に応じて）
 export async function POST() {
   return NextResponse.json({ message: "POST method not supported" }, { status: 405 })
 }

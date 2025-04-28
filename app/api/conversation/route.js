@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-export async function POST() {
+export async function POST(request) {
   try {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.dify.ai/v1"
     const APP_ID = process.env.NEXT_PUBLIC_APP_ID
@@ -37,13 +37,12 @@ export async function POST() {
     const data = await response.json()
     console.log("Conversation created successfully:", data)
     return NextResponse.json(data)
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in conversation API route:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-// GETメソッドを追加（必要に応じて）
 export async function GET() {
   return NextResponse.json({ message: "GET method not supported" }, { status: 405 })
 }

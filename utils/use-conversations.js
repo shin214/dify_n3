@@ -2,16 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react"
 
-export type Conversation = {
-  id: string
-  name: string
-  created_at: string
-}
-
 export const useConversations = () => {
-  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [conversations, setConversations] = useState([])
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState(null)
 
   // 会話一覧を取得
   const fetchConversations = useCallback(async () => {
@@ -35,13 +29,13 @@ export const useConversations = () => {
 
       // 会話一覧を日付の新しい順にソート
       const sortedConversations = data.data
-        ? data.data.sort((a: any, b: any) => {
+        ? data.data.sort((a, b) => {
             return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           })
         : []
 
       setConversations(sortedConversations)
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error fetching conversations:", err)
       setError(err.message || "会話一覧の取得に失敗しました")
     } finally {
@@ -66,6 +60,7 @@ export const useConversations = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({}), // 空のボディを送信
       })
 
       console.log("Response status:", response.status)
@@ -83,7 +78,7 @@ export const useConversations = () => {
       await fetchConversations()
 
       return data.conversation_id
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error creating new conversation:", err)
       setError(err.message || "新しい会話の作成に失敗しました")
       return null
