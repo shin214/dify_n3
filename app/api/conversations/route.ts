@@ -7,6 +7,7 @@ export async function GET() {
     const APP_KEY = process.env.APP_KEY
 
     if (!APP_ID || !APP_KEY) {
+      console.error("API credentials not configured")
       return NextResponse.json({ error: "API credentials not configured" }, { status: 500 })
     }
 

@@ -1,10 +1,5 @@
 import { NextResponse } from "next/server"
 
-// GETメソッドを追加（必要に応じて）
-export async function GET() {
-  return NextResponse.json({ message: "GET method not supported" }, { status: 405 })
-}
-
 export async function POST() {
   try {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.dify.ai/v1"
@@ -12,6 +7,7 @@ export async function POST() {
     const APP_KEY = process.env.APP_KEY
 
     if (!APP_ID || !APP_KEY) {
+      console.error("API credentials not configured")
       return NextResponse.json({ error: "API credentials not configured" }, { status: 500 })
     }
 
@@ -45,4 +41,9 @@ export async function POST() {
     console.error("Error in conversation API route:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+}
+
+// GETメソッドを追加（必要に応じて）
+export async function GET() {
+  return NextResponse.json({ message: "GET method not supported" }, { status: 405 })
 }
