@@ -1,26 +1,164 @@
 "use client"
 
 import type React from "react"
+import type { Message } from "@/utils/use-conversation-messages"
 
-import { useState, useRef, useEffect } from "react"
-import { Send } from "lucide-react"
+import { useState, useRef, useEffect, useCallback } from "react"
+import { Send, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUser } from "@clerk/nextjs"
-import { useChat } from "@/utils/api"
 import LoadingDots from "@/components/loading-dots"
 
-export default function ChatInterface() {
-  const { messages, isLoading, error, sendMessage } = useChat()
+interface ChatInterfaceProps {
+  conversationId: string | null
+  initialMessages?: Message[]
+  onConversationCreated?: (conversationId: string) => void
+}
+
+export default function ChatInterface({
+  conversationId,
+  initialMessages = [],
+  onConversationCreated,
+}: ChatInterfaceProps) {
+  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
   const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { user } = useUser()
+
+  // 初期メッセージを設定
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0) {
+      const formattedMessages = initialMessages.flatMap((msg) => [
+        { role: "user", content: msg.query },
+        { role: "assistant", content: msg.answer },
+      ])
+      setMessages(formattedMessages)
+    } else {
+      setMessages([])
+    }
+  }, [initialMessages])
+
+  // 会話IDがない場合は新しい会話を作成
+  useEffect(() => {
+    if (!conversationId) {
+      createNewConversation()
+    }
+  }, [conversationId])
 
   // メッセージが追加されたら自動スクロール
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  // 新しい会話を作成
+  const createNewConversation = async () => {
+    try {
+      setError(null)
+      console.log("Creating new conversation...")
+
+      const response = await fetch("/api/conversation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      console.log("Response status:", response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error("Error creating conversation:", errorData)
+        throw new Error(errorData.error || `API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log("Conversation created:", data)
+
+      if (onConversationCreated && data.conversation_id) {
+        onConversationCreated(data.conversation_id)
+      } else {
+        console.error("No conversation ID returned")
+        setError("会話IDが返されませんでした")
+      }
+    } catch (err: any) {
+      console.error("Error creating conversation:", err)
+      setError(`会話の作成に失敗しました: ${err.message}`)
+    }
+  }
+
+  // メッセージを送信
+  const sendMessage = useCallback(
+    async (content: string) => {
+      if (!content.trim() || isLoading || !conversationId) return
+
+      setIsLoading(true)
+      setError(null)
+
+      // ユーザーメッセージを追加
+      setMessages((prev) => [...prev, { role: "user", content }])
+
+      try {
+        // AIの応答を空で追加
+        setMessages((prev) => [...prev, { role: "assistant", content: "" }])
+
+        console.log(`Sending message to conversation ${conversationId}: ${content}`)
+
+        // サーバーサイドAPIを使用してメッセージを送信
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: content,
+            conversationId,
+          }),
+        })
+
+        console.log("Response status:", response.status)
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("Error sending message:", errorData)
+          throw new Error(errorData.error || `API error: ${response.status}`)
+        }
+
+        const data = await response.json()
+        console.log("Message response:", data)
+
+        // AIの応答を更新
+        setMessages((prev) => {
+          const updated = [...prev]
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: data.answer || "応答がありませんでした",
+          }
+          return updated
+        })
+      } catch (err: any) {
+        const errorMessage = err?.message || "メッセージの送信に失敗しました"
+        console.error(`Error sending message: ${errorMessage}`)
+        setError(errorMessage)
+
+        // エラーメッセージを表示
+        setMessages((prev) => {
+          const updated = [...prev]
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: `エラーが発生しました: ${errorMessage}`,
+          }
+          return updated
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [conversationId, isLoading],
+  )
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,8 +172,18 @@ export default function ChatInterface() {
   return (
     <div className="flex flex-col h-full">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded m-4" role="alert">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded m-4 flex items-center"
+          role="alert"
+        >
+          <AlertCircle className="h-5 w-5 mr-2" />
           <p>{error}</p>
+        </div>
+      )}
+
+      {conversationId && (
+        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded m-4 flex items-center">
+          <p>会話ID: {conversationId}</p>
         </div>
       )}
 
@@ -67,7 +215,9 @@ export default function ChatInterface() {
                   message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                 }`}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {message.content || (isLoading && index === messages.length - 1 ? "..." : "")}
+                </p>
               </div>
             </div>
           </div>
@@ -83,7 +233,7 @@ export default function ChatInterface() {
           className="flex-1"
           disabled={isLoading}
         />
-        <Button type="submit" size="icon" disabled={isLoading}>
+        <Button type="submit" size="icon" disabled={isLoading || !conversationId}>
           {isLoading ? <LoadingDots /> : <Send className="h-4 w-4" />}
         </Button>
       </form>
