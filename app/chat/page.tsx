@@ -1,18 +1,34 @@
-import Link from "next/link"
+"use client"
+
+import { UserButton } from "@clerk/nextjs"
+import { useAuth } from "@clerk/nextjs"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import ChatInterface from "@/components/chat-interface"
 
 export default function ChatPage() {
+  const { isLoaded, userId } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (isLoaded && !userId) {
+      router.push("/")
+    }
+  }, [isLoaded, userId, router])
+
+  if (!isLoaded || !userId) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <header className="w-full max-w-3xl flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">Difyチャット</h1>
-        <Link href="/" className="text-blue-500 hover:underline">
-          ホームに戻る
-        </Link>
+    <div className="flex flex-col h-screen">
+      <header className="flex items-center justify-between p-4 border-b">
+        <h1 className="text-xl font-bold">Difyチャット</h1>
+        <UserButton afterSignOutUrl="/" />
       </header>
-      <div className="w-full max-w-3xl p-4 border rounded-lg">
-        <p className="text-center mb-4">チャットページが正常に表示されています</p>
-        <p className="text-center text-gray-500">このページが表示されたら、次のステップでチャット機能を追加します。</p>
-      </div>
+      <main className="flex-1 overflow-hidden">
+        <ChatInterface />
+      </main>
     </div>
   )
 }
